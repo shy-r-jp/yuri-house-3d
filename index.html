@@ -23,7 +23,7 @@
 <body>
   <div id="app"></div>
   <section class="panel">
-    <div class="title"><h1>Yuri House 3D</h1><span class="tag">図面精密版 2026/08</span></div>
+    <div class="title"><h1>Yuri House 3D</h1><span class="tag">反復照合版 R4</span></div>
     <p class="sub">6/26平面・立面図 + 8/14外観訂正を反映</p>
     <div class="row" aria-label="表示階">
       <button data-floor="all" class="active">外観</button><button data-floor="1">1階</button><button data-floor="2">2階</button>
@@ -31,8 +31,8 @@
     <div class="row" aria-label="視点">
       <button data-view="iso" class="active">斜め</button><button data-view="top">真上</button><button data-view="front">正面</button>
     </div>
-    <div class="row two">
-      <button id="roofBtn" class="active">屋根 ON</button><button id="labelBtn">部屋名 OFF</button>
+    <div class="row">
+      <button id="roofBtn" class="active">屋根 ON</button><button id="labelBtn">部屋名 OFF</button><button id="gridBtn">図面線 OFF</button>
     </div>
     <div class="help">ドラッグ：回転　ピンチ／ホイール：拡大縮小<br>標準天井高 1階2.60m・2階2.50m／910mmモジュール</div>
   </section>
@@ -52,7 +52,7 @@
     const C={wall:0xe7dfd0,accent:0x414641,trim:0xf5f3ed,wood:0xb68d62,floor:0xc9a77a,tile:0xbab8b1,roof:0x25292d,glass:0xa9d3e3,frame:0x454a4d,foundation:0xd7d7d3,solar:0x173445,lawn:0x9eab91};
     const mat=(color,rough=.84,metal=.02)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});
     const M={wall:mat(C.wall,.96),accent:mat(C.accent,.92),trim:mat(C.trim,.9),wood:mat(C.wood,.88),floor:mat(C.floor,.91),tile:mat(C.tile,.95),roof:mat(C.roof,.92),frame:mat(C.frame,.65,.15),foundation:mat(C.foundation,.95),solar:mat(C.solar,.28,.35),glass:new THREE.MeshPhysicalMaterial({color:C.glass,transparent:true,opacity:.48,roughness:.08,metalness:0,side:THREE.DoubleSide})};
-    const root=new THREE.Group(),site=new THREE.Group(),f1=new THREE.Group(),f2=new THREE.Group(),roof=new THREE.Group(),details1=new THREE.Group(),details2=new THREE.Group(),common=new THREE.Group(),labels1=new THREE.Group(),labels2=new THREE.Group(); scene.add(site,root);root.add(f1,f2,roof,details1,details2,common,labels1,labels2);
+    const root=new THREE.Group(),site=new THREE.Group(),f1=new THREE.Group(),f2=new THREE.Group(),roof=new THREE.Group(),details1=new THREE.Group(),details2=new THREE.Group(),common=new THREE.Group(),labels1=new THREE.Group(),labels2=new THREE.Group(),drawing=new THREE.Group(); scene.add(site,root);root.add(f1,f2,roof,details1,details2,common,labels1,labels2,drawing);
     const BW=12.740,BD=9.555,H1=2.600,H2=2.500,SL=.16,Y2=H1+SL,F2=Y2+.14,WT=.115;
     function box(g,x,z,w,d,h,y,m=M.wall){const q=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);q.position.set(x,y+h/2,z);q.castShadow=q.receiveShadow=true;g.add(q);return q}
     function wallX(g,x,z,len,y,h,material=M.wall){return box(g,x,z,len,WT,h,y,material)}
@@ -64,6 +64,11 @@
     function label(text,x,z,y,group){const c=document.createElement('canvas');c.width=420;c.height=92;const q=c.getContext('2d');q.fillStyle='#ffffffea';q.roundRect(4,5,412,82,14);q.fill();q.fillStyle='#292a27';q.font='700 28px sans-serif';q.textAlign='center';q.textBaseline='middle';q.fillText(text,210,47);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.position.set(x,y,z);s.scale.set(2.75,.60,1);group.add(s)}
     function stair(g,x,z,y,turn=false){for(let i=0;i<14;i++){const q=box(g,x,z-1.18+i*.17,1.05,.18,.10+i*.17,y,M.wood);if(turn&&i>7)q.position.x+=.05*(i-7)}}
     function cabinet(g,x,z,w,d,h,y,color=M.trim){return box(g,x,z,w,d,h,y,color)}
+    function roomFloor(g,x,z,w,d,y,color){return floor(g,x,z,w-.06,d-.06,y,mat(color,.94))}
+    function line(points,color=0x395f72){const geo=new THREE.BufferGeometry().setFromPoints(points.map(([x,y,z])=>new THREE.Vector3(x,y,z)));drawing.add(new THREE.Line(geo,new THREE.LineBasicMaterial({color,transparent:true,opacity:.65})))}
+    function planGrid(y){for(let x=-BW/2;x<=BW/2+.01;x+=.91)line([[x,y,-BD/2],[x,y,BD/2]],0x7694a0);for(let z=-BD/2;z<=BD/2+.01;z+=.91)line([[-BW/2,y,z],[BW/2,y,z]],0x7694a0)}
+    function siding(group,y0,height){const seam=mat(0xb9b09f,.96);for(let y=y0+.18;y<y0+height;y+=.205){box(group,0,BD/2+.071,BW,.018,.012,y,seam);box(group,0,-BD/2-.071,BW,.018,.012,y,seam);box(group,-BW/2-.071,0,.018,BD,.012,y,seam);box(group,BW/2+.071,0,.018,BD,.012,y,seam)}}
+    planGrid(.225);planGrid(F2+.225);drawing.visible=false;
 
     // Site and foundation: plan A-1 / building footprint 12.740 x 9.555.
     const ground=box(site,0,0,31,28,.12,-.18,mat(0xaab3a6,.98));ground.receiveShadow=true;box(site,0,8.9,15,7.5,.045,-.05,mat(0x777a77,.98));
@@ -71,6 +76,7 @@
 
     // 1F exterior shell. South is the entrance/elevation side.
     wallX(f1,0,-BD/2,BW,0,H1);wallX(f1,0,BD/2,BW,0,H1);wallZ(f1,-BW/2,0,BD,0,H1);wallZ(f1,BW/2,0,BD,0,H1);
+    siding(details1,0,H1);
     // Accent facade and entrance projection from corrected exterior perspective.
     box(details1,1.35,BD/2+.10,3.10,.13,H1+2.10,0,M.accent);box(details1,4.25,BD/2+.36,2.55,.72,H1,0,M.wall);box(details1,4.25,BD/2+.40,2.75,.90,.20,H1,M.roof);
     addDoor(details1,'S',3.98,1.20,2.35,0,M.wood);
@@ -78,29 +84,39 @@
     addWindow(details1,'S',-4.52,1.65,2.00,.20,0);addWindow(details1,'S',.10,2.56,2.20,.20,0);addWindow(details1,'N',-4.55,1.65,1.10,.95,0);addWindow(details1,'N',-.25,2.56,1.10,.90,0);addWindow(details1,'N',4.25,1.60,.45,1.15,0);
     addWindow(details1,'W',-3.10,1.65,2.00,.20,0);addWindow(details1,'W',2.75,1.65,1.10,.95,0);addWindow(details1,'E',-3.35,.65,.65,1.25,0);addWindow(details1,'E',-.60,.65,.65,1.30,0);addWindow(details1,'E',2.60,1.15,.90,.80,0);
 
-    // 1F partitions, dimensioned on 910 mm module from A-2.
-    wallZ(f1,-2.73,-.68,8.15,.14,H1-.14); wallX(f1,-4.55,-1.365,3.64,.14,H1-.14); wallX(f1,-4.55,1.595,3.64,.14,H1-.14);
-    wallZ(f1,2.73,-1.42,6.70,.14,H1-.14); wallX(f1,4.55,-2.275,3.64,.14,H1-.14); wallX(f1,4.55,-.455,3.64,.14,H1-.14);wallX(f1,4.55,1.365,3.64,.14,H1-.14);
-    wallZ(f1,.91,-.80,3.64,.14,H1-.14);wallX(f1,1.82,-2.62,1.82,.14,H1-.14);wallX(f1,1.82,1.02,1.82,.14,H1-.14);
-    wallZ(f1,-4.55,.08,1.82,.14,H1-.14);wallX(f1,-3.64,.08,1.82,.14,H1-.14);
-    internalDoor(f1,-2.73,-3.15,.82,.14,Math.PI/2);internalDoor(f1,-2.73,2.55,.82,.14,Math.PI/2);internalDoor(f1,-4.55,.35,.76,.14,Math.PI/2);internalDoor(f1,2.73,-3.05,.76,.14,Math.PI/2);internalDoor(f1,2.73,.30,.76,.14,Math.PI/2);internalDoor(f1,3.65,-.455,.76,.14,0);internalDoor(f1,1.82,-1.72,.82,.14,0);
+    // 1F partitions rebuilt from A-2 dimension chains (all coordinates in metres).
+    roomFloor(f1,-4.55,-3.412,3.52,2.61,.205,0xd8bc8d);roomFloor(f1,-4.55,3.185,3.52,3.05,.205,0xd8bc8d);
+    roomFloor(f1,-.455,.15,5.34,8.84,.205,0xd7b989);roomFloor(f1,4.55,-3.75,3.52,1.82,.205,0xbfcbd0);roomFloor(f1,4.55,-1.93,3.52,1.70,.205,0xd8d3c8);roomFloor(f1,4.55,2.95,3.52,2.75,.205,0xcfc9bb);
+    wallZ(f1,-2.73,-3.03,3.49,.14,H1-.14);wallZ(f1,-2.73,1.82,5.70,.14,H1-.14);
+    wallX(f1,-4.55,-2.047,3.64,.14,H1-.14);wallX(f1,-4.55,-.910,3.64,.14,H1-.14);wallX(f1,-4.55,.910,3.64,.14,H1-.14);wallX(f1,-4.55,1.592,3.64,.14,H1-.14);
+    wallZ(f1,-5.46,-.34,1.14,.14,H1-.14);wallZ(f1,-3.64,.34,2.50,.14,H1-.14);wallX(f1,-4.55,.00,1.82,.14,H1-.14);
+    wallZ(f1,1.365,-2.50,4.55,.14,H1-.14);wallZ(f1,2.275,-2.50,4.55,.14,H1-.14);wallZ(f1,2.73,.88,2.73,.14,H1-.14);
+    wallX(f1,4.55,-2.957,3.64,.14,H1-.14);wallX(f1,4.55,-1.137,3.64,.14,H1-.14);wallX(f1,4.55,.228,3.64,.14,H1-.14);wallX(f1,4.55,1.138,3.64,.14,H1-.14);wallX(f1,4.55,2.048,3.64,.14,H1-.14);
+    wallX(f1,1.82,-.227,.91,.14,H1-.14);wallX(f1,1.82,1.593,1.82,.14,H1-.14);
+    internalDoor(f1,-2.73,-1.55,.82,.14,Math.PI/2);internalDoor(f1,-2.73,1.98,.82,.14,Math.PI/2);internalDoor(f1,-4.55,-.91,.76,.14,0);internalDoor(f1,2.73,-2.52,.76,.14,Math.PI/2);internalDoor(f1,2.73,-.48,.76,.14,Math.PI/2);internalDoor(f1,3.65,.228,.76,.14,0);internalDoor(f1,1.82,1.02,.82,.14,0);
     // 1F equipment and furniture-scale masses.
     cabinet(f1,-.55,-3.55,3.55,.62,.92,.14,M.trim);cabinet(f1,-.30,-2.05,2.10,.80,.90,.14,M.trim);cabinet(f1,-.20,.10,2.00,.95,.74,.14,mat(0xb38c61,.88));
     cabinet(f1,4.55,-3.25,1.62,1.62,.58,.14,mat(0xd8e6ea,.7));cabinet(f1,4.55,-1.42,1.20,.58,.85,.14,M.trim);cabinet(f1,4.60,.48,.72,1.20,.54,.14,M.trim);stair(f1,1.82,.10,.14,true);
-    label('洋室A 6帖',-4.55,-3.12,1.55,labels1);label('洋室B 7帖',-4.55,2.85,1.55,labels1);label('LDK1 29.4帖',-.30,.45,1.55,labels1);label('WIC',-5.45,-.15,1.55,labels1);label('納戸',-3.60,.15,1.55,labels1);label('浴室',4.55,-3.35,1.55,labels1);label('洗面脱衣',4.55,-1.35,1.55,labels1);label('玄関',4.15,3.45,1.55,labels1);
+    label('洋室A 6帖',-4.55,-3.40,1.55,labels1);label('洋室B 7帖',-4.55,3.18,1.55,labels1);label('LDK1 29.4帖',-.45,.35,1.55,labels1);label('WIC',-5.45,.35,1.55,labels1);label('納戸',-3.65,.35,1.55,labels1);label('浴室 1620',4.55,-3.75,1.55,labels1);label('洗面脱衣',4.55,-1.90,1.55,labels1);label('玄関',4.15,3.45,1.55,labels1);
 
     // 2F slab, shell and balcony/recesses.
     floor(f2,0,-.08,BW,8.645,Y2,M.floor);wallX(f2,0,-4.40,BW,F2,H2);wallX(f2,0,4.18,BW,F2,H2);wallZ(f2,-BW/2,-.10,8.58,F2,H2);wallZ(f2,BW/2,-.10,8.58,F2,H2);
-    wallZ(f2,-2.73,-.20,7.80,F2+.14,H2-.14);wallX(f2,-4.55,-1.365,3.64,F2+.14,H2-.14);wallX(f2,-4.55,1.365,3.64,F2+.14,H2-.14);
-    wallZ(f2,2.73,-.25,7.75,F2+.14,H2-.14);wallX(f2,4.55,-1.365,3.64,F2+.14,H2-.14);wallX(f2,4.55,.91,3.64,F2+.14,H2-.14);wallX(f2,4.55,2.73,3.64,F2+.14,H2-.14);
-    wallZ(f2,.91,-.15,3.64,F2+.14,H2-.14);wallX(f2,1.82,-1.97,1.82,F2+.14,H2-.14);wallX(f2,1.82,1.67,1.82,F2+.14,H2-.14);
+    siding(details2,F2,H2);
+    roomFloor(f2,-4.55,-3.18,3.52,2.15,F2+.13,0xd8bc8d);roomFloor(f2,-4.55,.00,3.52,2.62,F2+.13,0xd7b989);roomFloor(f2,-4.55,2.73,3.52,2.62,F2+.13,0xd8bc8d);
+    roomFloor(f2,-.455,-.15,5.34,7.95,F2+.13,0xd7b989);roomFloor(f2,4.55,-2.73,3.52,2.62,F2+.13,0xd8bc8d);roomFloor(f2,4.55,.42,3.52,2.50,F2+.13,0xd2c5a9);roomFloor(f2,4.55,3.25,3.52,1.65,F2+.13,0xd8bc8d);
+    wallZ(f2,-2.73,-2.76,3.18,F2+.14,H2-.14);wallZ(f2,-2.73,2.18,3.98,F2+.14,H2-.14);
+    wallX(f2,-4.55,-2.047,3.64,F2+.14,H2-.14);wallX(f2,-4.55,.682,3.64,F2+.14,H2-.14);wallX(f2,-4.55,1.365,3.64,F2+.14,H2-.14);
+    wallZ(f2,1.365,-1.14,5.46,F2+.14,H2-.14);wallZ(f2,2.73,.23,5.46,F2+.14,H2-.14);
+    wallX(f2,4.55,-1.365,3.64,F2+.14,H2-.14);wallX(f2,4.55,.455,3.64,F2+.14,H2-.14);wallX(f2,4.55,1.365,3.64,F2+.14,H2-.14);wallX(f2,4.55,2.73,3.64,F2+.14,H2-.14);
+    wallZ(f2,4.095,.91,2.73,F2+.14,H2-.14);wallZ(f2,5.005,.91,2.73,F2+.14,H2-.14);
+    wallX(f2,1.82,-1.82,.91,F2+.14,H2-.14);wallX(f2,1.82,1.82,.91,F2+.14,H2-.14);
     internalDoor(f2,-2.73,-2.90,.82,F2+.14,Math.PI/2);internalDoor(f2,-2.73,2.45,.82,F2+.14,Math.PI/2);internalDoor(f2,2.73,-2.75,.82,F2+.14,Math.PI/2);internalDoor(f2,2.73,.20,.76,F2+.14,Math.PI/2);internalDoor(f2,4.55,1.90,.76,F2+.14,Math.PI/2);
     // South balcony (dark accent), west/east roof terraces and corrected windows.
     box(details2,.55,4.58,4.10,.72,1.30,F2+.70,M.accent);box(details2,.55,4.98,4.55,1.18,.13,F2-.02,M.tile);for(let i=0;i<6;i++)box(details2,-1.35+i*.75,5.48,.035,.035,.70,F2+1.30,M.frame);box(details2,.55,5.48,4.35,.05,.05,F2+1.98,M.frame);
     addWindow(details2,'S',-4.55,1.65,1.55,.65,F2);addWindow(details2,'S',-.55,2.56,2.10,.35,F2);addWindow(details2,'S',3.95,1.65,2.00,.30,F2);addWindow(details2,'N',-4.60,1.65,1.15,.75,F2);addWindow(details2,'N',-.35,2.56,1.15,.70,F2);addWindow(details2,'N',4.10,1.65,1.15,.75,F2);
     addWindow(details2,'W',-2.80,1.65,1.50,.45,F2);addWindow(details2,'W',2.55,1.65,1.55,.45,F2);addWindow(details2,'E',-2.55,.65,.65,1.25,F2);addWindow(details2,'E',.20,.65,.65,1.25,F2);addWindow(details2,'E',2.70,1.65,1.40,.70,F2);
     cabinet(f2,-.25,-3.45,3.20,.65,.86,F2+.14,M.trim);cabinet(f2,4.45,-2.45,2.10,.72,.86,F2+.14,M.trim);stair(f2,1.82,-.10,F2+.14,true);
-    label('洋室C 4.5帖',-4.55,-2.75,F2+1.55,labels2);label('洋室D 6帖',-4.55,2.55,F2+1.55,labels2);label('LDK2 21.4帖',-.20,.20,F2+1.55,labels2);label('洋室E 7帖',4.45,-2.55,F2+1.55,labels2);label('書斎',5.30,3.15,F2+1.55,labels2);label('WIC',5.30,-.20,F2+1.55,labels2);label('ランドリー',4.20,2.15,F2+1.55,labels2);
+    label('洋室C 4.5帖',-4.55,-3.15,F2+1.55,labels2);label('洋室D 6帖',-4.55,2.72,F2+1.55,labels2);label('LDK2 21.4帖',-.35,.10,F2+1.55,labels2);label('洋室E 7帖',4.45,-2.70,F2+1.55,labels2);label('書斎',5.30,3.15,F2+1.55,labels2);label('WIC',5.30,.45,F2+1.55,labels2);label('ランドリー',4.20,2.15,F2+1.55,labels2);
 
     // Hip roof generated as four sloped planes, ridge and solar arrays; height follows A-3 (8.637m).
     function hipRoof(group,cx,cz,w,d,eave,rise,material=M.roof){const x0=cx-w/2,x1=cx+w/2,z0=cz-d/2,z1=cz+d/2,rl=Math.max(.35,(w-d)/2),y=eave;const verts=new Float32Array([x0,y,z0,x1,y,z0,cx+rl,y+rise,cz,cx-rl,y+rise,cz,x1,y,z0,x1,y,z1,cx+rl,y+rise,cz,x1,y,z1,x0,y,z1,cx-rl,y+rise,cz,cx+rl,y+rise,cz,x0,y,z1,x0,y,z0,cx-rl,y+rise,cz]);const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(verts,3));geo.setIndex([0,1,2,0,2,3,4,5,6,5,7,8,5,8,6,9,10,11]);geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,material);mesh.castShadow=mesh.receiveShadow=true;group.add(mesh);return mesh}
@@ -111,12 +127,13 @@
     box(common,0,0,BW+.15,BD+.15,.45,-.45,M.foundation);for(let i=0;i<3;i++)box(common,4.05,5.05+i*.20,1.65,.30,.12,i*.08,M.tile);for(const [x,z] of [[-5.55,4.65],[-3.95,4.65],[5.75,-3.4],[5.75,-1.8]]){box(common,x,z,.62,.25,.58,.02,M.frame);box(common,x,z+.14,.42,.04,.42,.10,M.trim)}
     labels1.visible=labels2.visible=false;
 
-    let floorMode='all',roofOn=true,labelsOn=false;
+    let floorMode='all',roofOn=true,labelsOn=false,gridOn=false;
     function sync(){const one=floorMode==='1',two=floorMode==='2';f1.visible=!two;f2.visible=!one;details1.visible=!two;details2.visible=!one;roof.visible=roofOn&&!one;labels1.visible=labelsOn&&!two;labels2.visible=labelsOn&&!one;if(one){f2.visible=false;details2.visible=false;roof.visible=false}if(two){f1.visible=false;details1.visible=false;roof.visible=false}}
     document.querySelectorAll('[data-floor]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-floor]').forEach(x=>x.classList.remove('active'));b.classList.add('active');floorMode=b.dataset.floor;roofOn=floorMode==='all';document.getElementById('roofBtn').classList.toggle('active',roofOn);document.getElementById('roofBtn').textContent='屋根 '+(roofOn?'ON':'OFF');sync()});
     document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-view]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const v=b.dataset.view;if(v==='iso')camera.position.set(16,12,18);if(v==='top')camera.position.set(0,29,.01);if(v==='front')camera.position.set(0,6.3,24);controls.target.set(0,2.4,0);controls.update()});
     document.getElementById('roofBtn').onclick=e=>{roofOn=!roofOn;e.currentTarget.classList.toggle('active',roofOn);e.currentTarget.textContent='屋根 '+(roofOn?'ON':'OFF');sync()};
     document.getElementById('labelBtn').onclick=e=>{labelsOn=!labelsOn;e.currentTarget.classList.toggle('active',labelsOn);e.currentTarget.textContent='部屋名 '+(labelsOn?'ON':'OFF');sync()};
+    document.getElementById('gridBtn').onclick=e=>{gridOn=!gridOn;drawing.visible=gridOn;e.currentTarget.classList.toggle('active',gridOn);e.currentTarget.textContent='図面線 '+(gridOn?'ON':'OFF')};
     addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});sync();(function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)})();
   </script>
 </body>
