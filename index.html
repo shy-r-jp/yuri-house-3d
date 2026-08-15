@@ -3,76 +3,121 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <meta name="theme-color" content="#f4f0e8">
-  <title>Yuri House 3D</title>
+  <meta name="theme-color" content="#dce5e7">
+  <title>Yuri House 3D - 図面精密版</title>
   <style>
-    :root{color-scheme:light;--ink:#252521;--muted:#74736c;--paper:rgba(255,255,255,.92);--line:#ddd9d0;--accent:#343631}
-    *{box-sizing:border-box}
-    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#e9eef1;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI",sans-serif;color:var(--ink)}
-    #view{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
-    .panel{position:fixed;z-index:5;left:max(14px,env(safe-area-inset-left));top:max(14px,env(safe-area-inset-top));width:min(350px,calc(100vw - 28px));padding:15px;background:var(--paper);border:1px solid rgba(255,255,255,.8);border-radius:20px;box-shadow:0 12px 36px rgba(41,48,53,.16);backdrop-filter:blur(18px)}
-    .title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.title h1{margin:0;font-size:19px;letter-spacing:-.02em}.tag{padding:4px 7px;border-radius:999px;background:#ede9df;color:#6a665e;font-size:10px;white-space:nowrap}
-    .sub{margin:3px 0 11px;font-size:11px;color:var(--muted)}
-    .group{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:7px}
-    button{min-height:39px;border:1px solid var(--line);background:#fff;border-radius:11px;color:#4b4b46;font:inherit;font-size:12px;font-weight:650;cursor:pointer;-webkit-tap-highlight-color:transparent}
-    button.active{border-color:var(--accent);background:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.12)}
-    button:focus-visible{outline:3px solid #7fb7da;outline-offset:2px}
-    .toggles{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}.toggles button{color:#343631}.toggles button.active{color:#fff}
-    .help{margin-top:10px;padding-top:9px;border-top:1px solid #e7e4dd;font-size:10px;line-height:1.55;color:var(--muted)}
-    .badge{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:4;padding:8px 10px;border-radius:12px;background:rgba(37,37,33,.76);color:#fff;font-size:10px;backdrop-filter:blur(10px)}
-    @media(max-width:600px){.panel{padding:12px;border-radius:17px}.title h1{font-size:17px}.sub{margin-bottom:8px}.group,.toggles{gap:5px;margin-top:5px}button{min-height:36px}.help{margin-top:7px;padding-top:7px}}
-    @media(max-height:620px){.help{display:none}.panel{padding:10px}.sub{display:none}}
+    :root{--ink:#242522;--paper:rgba(255,255,255,.92);--line:#ddd8cf;--accent:#30332e;--muted:#706f68}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#dce5e7;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI",sans-serif;color:var(--ink)}
+    #app{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;touch-action:none}
+    .panel{position:fixed;z-index:10;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));width:min(390px,calc(100vw - 24px));padding:14px;background:var(--paper);border:1px solid #fff;border-radius:20px;box-shadow:0 12px 36px #2632382a;backdrop-filter:blur(16px)}
+    .title{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.title h1{font-size:18px;margin:0}.tag{font-size:10px;color:#655f55;background:#eee8dc;padding:4px 7px;border-radius:999px;white-space:nowrap}.sub{font-size:11px;color:var(--muted);margin:3px 0 9px}
+    .row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}.row.two{grid-template-columns:repeat(2,1fr)}
+    button{min-height:38px;border:1px solid var(--line);border-radius:11px;background:#fff;color:#454640;font:inherit;font-size:12px;font-weight:700;-webkit-tap-highlight-color:transparent}button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+    .help{font-size:10px;line-height:1.5;color:var(--muted);border-top:1px solid #e5e0d7;margin-top:9px;padding-top:8px}
+    .badge{position:fixed;z-index:9;right:max(11px,env(safe-area-inset-right));bottom:max(11px,env(safe-area-inset-bottom));background:#272925cc;color:#fff;padding:8px 10px;border-radius:12px;font-size:10px;backdrop-filter:blur(8px)}
+    .legend{position:fixed;z-index:9;left:12px;bottom:max(12px,env(safe-area-inset-bottom));background:#ffffffdd;border-radius:12px;padding:8px 10px;font-size:10px;color:#5f605a;display:none}
+    @media(max-width:600px){.panel{padding:11px;border-radius:17px}.title h1{font-size:16px}.sub{margin-bottom:6px}.row{gap:5px;margin-top:5px}button{min-height:35px}.help{margin-top:6px;padding-top:6px}.badge{font-size:9px}}
+    @media(max-height:650px){.help,.sub{display:none}.panel{padding:9px}.row{margin-top:4px}button{min-height:32px}}
   </style>
 </head>
 <body>
-  <canvas id="view" aria-label="石井邸の簡易3Dモデル"></canvas>
-  <section class="panel" aria-label="表示設定">
-    <div class="title"><h1>Yuri House 3D</h1><span class="tag">2026/06/26 図面反映</span></div>
-    <p class="sub">2階建て住宅・寸法ベース簡易ビューア</p>
-    <div class="group" aria-label="階の選択">
+  <div id="app"></div>
+  <section class="panel">
+    <div class="title"><h1>Yuri House 3D</h1><span class="tag">図面精密版 2026/08</span></div>
+    <p class="sub">6/26平面・立面図 + 8/14外観訂正を反映</p>
+    <div class="row" aria-label="表示階">
       <button data-floor="all" class="active">外観</button><button data-floor="1">1階</button><button data-floor="2">2階</button>
     </div>
-    <div class="group" aria-label="視点の選択">
+    <div class="row" aria-label="視点">
       <button data-view="iso" class="active">斜め</button><button data-view="top">真上</button><button data-view="front">正面</button>
     </div>
-    <div class="toggles">
+    <div class="row two">
       <button id="roofBtn" class="active">屋根 ON</button><button id="labelBtn">部屋名 OFF</button>
     </div>
-    <div class="help">ドラッグ：回転　ピンチ／ホイール：拡大縮小<br>図面の主要寸法・間取りを簡易的に立体化しています。</div>
+    <div class="help">ドラッグ：回転　ピンチ／ホイール：拡大縮小<br>標準天井高 1階2.60m・2階2.50m／910mmモジュール</div>
   </section>
-  <div class="badge">建物幅 12.740m × 奥行 9.555m</div>
-  <script>
-  (()=>{
-    'use strict';
-    const canvas=document.getElementById('view'),ctx=canvas.getContext('2d');
-    const roofBtn=document.getElementById('roofBtn'),labelBtn=document.getElementById('labelBtn');
-    let vw=0,vh=0,dpr=1;
-    const state={yaw:-.68,pitch:.46,zoom:42,floor:'all',roof:true,labels:false};
-    const BW=12.740,BD=9.555,H1=2.600,H2=2.500,SL=.16;
-    const faces=[];
+  <div class="badge">建物幅 12.740m × 奥行 9.555m　最高高さ 8.637m</div>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"}}</script>
+  <script type="module">
+    import * as THREE from 'three';
+    import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-    function resize(){dpr=Math.min(devicePixelRatio||1,2);vw=innerWidth;vh=innerHeight;canvas.width=Math.round(vw*dpr);canvas.height=Math.round(vh*dpr);canvas.style.width=vw+'px';canvas.style.height=vh+'px';ctx.setTransform(dpr,0,0,dpr,0,0);state.zoom=Math.min(vw<600?34:45,Math.max(24,vw/25));draw()}
-    function rotate([x,y,z]){const cy=Math.cos(state.yaw),sy=Math.sin(state.yaw),cp=Math.cos(state.pitch),sp=Math.sin(state.pitch),x1=x*cy-z*sy,z1=x*sy+z*cy;return[x1,y*cp-z1*sp,y*sp+z1*cp]}
-    function project(p){const r=rotate(p);return[vw/2+r[0]*state.zoom,vh*(vw<600?.63:.60)-r[1]*state.zoom,r[2]]}
-    function queue(points,fill,stroke='#aaa49a'){faces.push({points,fill,stroke,depth:points.reduce((n,p)=>n+rotate(p)[2],0)/points.length})}
-    function paint(){faces.sort((a,b)=>a.depth-b.depth);for(const f of faces){ctx.beginPath();f.points.map(project).forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=f.fill;ctx.fill();if(f.stroke){ctx.strokeStyle=f.stroke;ctx.lineWidth=.85;ctx.stroke()}}}
-    function box(x,z,w,d,h,y,top='#efe8da',sides=['#ded6c8','#d3cbbd','#c7c0b4','#e7dfd2']){const x0=x-w/2,x1=x+w/2,z0=z-d/2,z1=z+d/2,y1=y+h;queue([[x0,y,z0],[x1,y,z0],[x1,y1,z0],[x0,y1,z0]],sides[0]);queue([[x1,y,z0],[x1,y,z1],[x1,y1,z1],[x1,y1,z0]],sides[1]);queue([[x1,y,z1],[x0,y,z1],[x0,y1,z1],[x1,y1,z1]],sides[2]);queue([[x0,y,z1],[x0,y,z0],[x0,y1,z0],[x0,y1,z1]],sides[3]);queue([[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]],top)}
-    function wall(x,z,len,t,h,y,alongX=true){box(x,z,alongX?len:t,alongX?t:len,h,y,'#f6f1e8')}
-    function glass(x,z,w,h,y,side='south'){const t=.035;if(side==='south'||side==='north')box(x,z,w,t,h,y,'#b8d3dc',['#a8c6d1','#8daeb9','#91b2bd','#bad4dd']);else box(x,z,t,w,h,y,'#b8d3dc',['#a8c6d1','#8daeb9','#91b2bd','#bad4dd'])}
-    function roomLabel(text,x,y,z){if(!state.labels)return;const p=project([x,y,z]);ctx.font='700 11px -apple-system,sans-serif';const tw=ctx.measureText(text).width;ctx.fillStyle='rgba(255,255,255,.92)';ctx.fillRect(p[0]-tw/2-6,p[1]-9,tw+12,18);ctx.fillStyle='#2c2c29';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,p[0],p[1])}
-    function ground(){queue([[-18,-.27,-15],[18,-.27,-15],[18,-.27,15],[-18,-.27,15]],'#ced6d4',null);queue([[-18,-.25,6],[18,-.25,6],[18,-.25,15],[-18,-.25,15]],'#b9bdba',null)}
-    function floor1(){box(0,0,BW,BD,.20,-.20,'#c7af87');wall(0,-BD/2,BW,.13,H1,0);wall(0,BD/2,BW,.13,H1,0);wall(-BW/2,0,BD,.13,H1,0,false);wall(BW/2,0,BD,.13,H1,0,false);wall(-2.73,.08,8.85,.11,H1,0,false);wall(-4.55,.20,3.64,.11,H1,0);wall(-4.55,-2.58,3.64,.11,H1,0);wall(3.15,-.42,6.90,.11,H1,0,false);wall(4.55,1.00,2.75,.11,H1,0);wall(4.55,-1.35,2.75,.11,H1,0);wall(1.75,2.08,2.45,.11,H1,0);glass(-4.55,-BD/2-.07,1.65,1.65,.45);glass(-4.55,BD/2+.07,2.55,1.75,.35,'north');glass(.25,-BD/2-.07,2.55,1.80,.30);glass(BW/2+.07,1.15,1.25,1.20,.70,'east')}
-    function floor2(){const y=H1+SL;box(0,0,BW,BD,.14,y,'#d6c39f');const wy=y+.14;wall(0,-BD/2,BW,.13,H2,wy);wall(0,BD/2,BW,.13,H2,wy);wall(-BW/2,0,BD,.13,H2,wy,false);wall(BW/2,0,BD,.13,H2,wy,false);wall(-2.05,.15,8.60,.11,H2,wy,false);wall(-4.30,.45,4.55,.11,H2,wy);wall(-4.30,-2.35,4.55,.11,H2,wy);wall(2.35,.25,8.20,.11,H2,wy,false);wall(4.25,1.10,3.15,.11,H2,wy);wall(4.25,-1.10,3.15,.11,H2,wy);box(-4.35,-BD/2-.72,3.8,1.35,.11,y+.02,'#b5b6b2');box(3.75,-BD/2-.68,2.7,1.25,.11,y+.02,'#b5b6b2');glass(-4.5,-BD/2-.07,1.7,1.65,wy+.45);glass(.2,-BD/2-.07,2.55,1.70,wy+.45);glass(4.2,-BD/2-.07,1.3,1.45,wy+.55);glass(-BW/2-.07,2.3,1.5,1.45,wy+.55,'west')}
-    function roof(){const y=H1+SL+.14+H2,h=1.55,e=.62;queue([[-BW/2-e,y,-BD/2-e],[BW/2+e,y,-BD/2-e],[BW/2-1.5,y+h,0],[-BW/2+1.2,y+h,0]],'#303335','#202224');queue([[BW/2+e,y,-BD/2-e],[BW/2+e,y,BD/2+e],[BW/2-1.5,y+h,0]],'#25282a','#202224');queue([[BW/2+e,y,BD/2+e],[-BW/2-e,y,BD/2+e],[-BW/2+1.2,y+h,0],[BW/2-1.5,y+h,0]],'#202325','#17191a');queue([[-BW/2-e,y,BD/2+e],[-BW/2-e,y,-BD/2-e],[-BW/2+1.2,y+h,0]],'#3a3d3f','#202224')}
-    function draw(){faces.length=0;const g=ctx.createLinearGradient(0,0,0,vh);g.addColorStop(0,'#eef4f7');g.addColorStop(.68,'#dfe7e9');g.addColorStop(1,'#cdd4d2');ctx.fillStyle=g;ctx.fillRect(0,0,vw,vh);ground();if(state.floor==='all'||state.floor==='1')floor1();if(state.floor==='all'||state.floor==='2')floor2();if(state.roof&&state.floor==='all')roof();paint();if(state.floor==='all'||state.floor==='1')floor1Labels();if(state.floor==='all'||state.floor==='2')floor2Labels()}
-    function floor1Labels(){roomLabel('LDK1 29.4帖',0,1.05,-.8);roomLabel('洋室A 6帖',-4.5,1.05,2.5);roomLabel('洋室B 7帖',-4.5,1.05,-2.8);roomLabel('玄関',4.3,1.05,-3.0)}
-    function floor2Labels(){const y=H1+SL+.14;roomLabel('LDK2 21.4帖',0,y+1.05,-.6);roomLabel('洋室C 4.5帖',-4.5,y+1.05,2.5);roomLabel('洋室D 6帖',-4.5,y+1.05,-2.7);roomLabel('洋室E 7帖',4.1,y+1.05,2.4)}
-    document.querySelectorAll('[data-floor]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-floor]').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.floor=b.dataset.floor;state.roof=state.floor==='all';roofBtn.classList.toggle('active',state.roof);roofBtn.textContent='屋根 '+(state.roof?'ON':'OFF');draw()}));
-    document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-view]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const v=b.dataset.view;if(v==='iso'){state.yaw=-.68;state.pitch=.46}if(v==='top'){state.yaw=0;state.pitch=1.52}if(v==='front'){state.yaw=0;state.pitch=.08}draw()}));
-    roofBtn.addEventListener('click',()=>{state.roof=!state.roof;roofBtn.textContent='屋根 '+(state.roof?'ON':'OFF');roofBtn.classList.toggle('active',state.roof);draw()});labelBtn.addEventListener('click',()=>{state.labels=!state.labels;labelBtn.textContent='部屋名 '+(state.labels?'ON':'OFF');labelBtn.classList.toggle('active',state.labels);draw()});
-    let dragging=false,lx=0,ly=0,pinch=0,zoom0=0;canvas.addEventListener('pointerdown',e=>{dragging=true;lx=e.clientX;ly=e.clientY;canvas.setPointerCapture?.(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(!dragging)return;state.yaw+=(e.clientX-lx)*.008;state.pitch=Math.max(.05,Math.min(1.52,state.pitch-(e.clientY-ly)*.006));lx=e.clientX;ly=e.clientY;draw()});['pointerup','pointercancel'].forEach(n=>canvas.addEventListener(n,()=>dragging=false));canvas.addEventListener('wheel',e=>{e.preventDefault();state.zoom=Math.max(20,Math.min(92,state.zoom*(e.deltaY>0?.92:1.08)));draw()},{passive:false});canvas.addEventListener('touchstart',e=>{if(e.touches.length===2){pinch=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);zoom0=state.zoom}},{passive:true});canvas.addEventListener('touchmove',e=>{if(e.touches.length===2&&pinch){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);state.zoom=Math.max(20,Math.min(92,zoom0*d/pinch));draw()}},{passive:true});
-    addEventListener('resize',resize);resize();
-  })();
+    const app=document.getElementById('app');
+    const scene=new THREE.Scene(); scene.background=new THREE.Color(0xdce5e7); scene.fog=new THREE.Fog(0xdce5e7,32,62);
+    const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.05,100); camera.position.set(16,12,18);
+    const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'}); renderer.setPixelRatio(Math.min(devicePixelRatio,1.75)); renderer.setSize(innerWidth,innerHeight); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.outputColorSpace=THREE.SRGBColorSpace; app.appendChild(renderer.domElement);
+    const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.target.set(0,2.5,0); controls.minDistance=7; controls.maxDistance=38; controls.maxPolarAngle=Math.PI*.49;
+    scene.add(new THREE.HemisphereLight(0xffffff,0x7d8b8b,2.2)); const sun=new THREE.DirectionalLight(0xfff4df,3.1); sun.position.set(-13,20,15); sun.castShadow=true; sun.shadow.mapSize.set(1536,1536); sun.shadow.camera.left=-18;sun.shadow.camera.right=18;sun.shadow.camera.top=18;sun.shadow.camera.bottom=-18;scene.add(sun);
+
+    const C={wall:0xe7dfd0,accent:0x414641,trim:0xf5f3ed,wood:0xb68d62,floor:0xc9a77a,tile:0xbab8b1,roof:0x25292d,glass:0xa9d3e3,frame:0x454a4d,foundation:0xd7d7d3,solar:0x173445,lawn:0x9eab91};
+    const mat=(color,rough=.84,metal=.02)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});
+    const M={wall:mat(C.wall,.96),accent:mat(C.accent,.92),trim:mat(C.trim,.9),wood:mat(C.wood,.88),floor:mat(C.floor,.91),tile:mat(C.tile,.95),roof:mat(C.roof,.92),frame:mat(C.frame,.65,.15),foundation:mat(C.foundation,.95),solar:mat(C.solar,.28,.35),glass:new THREE.MeshPhysicalMaterial({color:C.glass,transparent:true,opacity:.48,roughness:.08,metalness:0,side:THREE.DoubleSide})};
+    const root=new THREE.Group(),site=new THREE.Group(),f1=new THREE.Group(),f2=new THREE.Group(),roof=new THREE.Group(),details1=new THREE.Group(),details2=new THREE.Group(),common=new THREE.Group(),labels1=new THREE.Group(),labels2=new THREE.Group(); scene.add(site,root);root.add(f1,f2,roof,details1,details2,common,labels1,labels2);
+    const BW=12.740,BD=9.555,H1=2.600,H2=2.500,SL=.16,Y2=H1+SL,F2=Y2+.14,WT=.115;
+    function box(g,x,z,w,d,h,y,m=M.wall){const q=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);q.position.set(x,y+h/2,z);q.castShadow=q.receiveShadow=true;g.add(q);return q}
+    function wallX(g,x,z,len,y,h,material=M.wall){return box(g,x,z,len,WT,h,y,material)}
+    function wallZ(g,x,z,len,y,h,material=M.wall){return box(g,x,z,WT,len,h,y,material)}
+    function floor(g,x,z,w,d,y,material=M.floor){return box(g,x,z,w,d,.12,y,material)}
+    function addWindow(g,side,pos,w,h,sill,y){const south=side==='S',north=side==='N',east=side==='E',west=side==='W'; let x=0,z=0,rot=0;if(south){x=pos;z=BD/2+.064}else if(north){x=pos;z=-BD/2-.064}else if(east){x=BW/2+.064;z=pos;rot=Math.PI/2}else{x=-BW/2-.064;z=pos;rot=Math.PI/2}const frame=box(g,x,z,w+.12,.075,h+.12,y+sill-.06,M.frame);frame.rotation.y=rot;const glass=box(g,x,z,w,.025,h,y+sill,M.glass);glass.rotation.y=rot; if(w>1.0){const mull=box(g,x,z,.035,.09,h,y+sill,M.frame);mull.rotation.y=rot}}
+    function addDoor(g,side,pos,w,h,y,material=M.wood){let x=0,z=0,rot=0;if(side==='S'){x=pos;z=BD/2+.07}else if(side==='N'){x=pos;z=-BD/2-.07}else if(side==='E'){x=BW/2+.07;z=pos;rot=Math.PI/2}else{x=-BW/2-.07;z=pos;rot=Math.PI/2}const d=box(g,x,z,w,.10,h,y,material);d.rotation.y=rot;return d}
+    function internalDoor(g,x,z,w,y,rot=0){const d=box(g,x,z,w,.07,2.03,y,M.wood);d.rotation.y=rot;return d}
+    function label(text,x,z,y,group){const c=document.createElement('canvas');c.width=420;c.height=92;const q=c.getContext('2d');q.fillStyle='#ffffffea';q.roundRect(4,5,412,82,14);q.fill();q.fillStyle='#292a27';q.font='700 28px sans-serif';q.textAlign='center';q.textBaseline='middle';q.fillText(text,210,47);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.position.set(x,y,z);s.scale.set(2.75,.60,1);group.add(s)}
+    function stair(g,x,z,y,turn=false){for(let i=0;i<14;i++){const q=box(g,x,z-1.18+i*.17,1.05,.18,.10+i*.17,y,M.wood);if(turn&&i>7)q.position.x+=.05*(i-7)}}
+    function cabinet(g,x,z,w,d,h,y,color=M.trim){return box(g,x,z,w,d,h,y,color)}
+
+    // Site and foundation: plan A-1 / building footprint 12.740 x 9.555.
+    const ground=box(site,0,0,31,28,.12,-.18,mat(0xaab3a6,.98));ground.receiveShadow=true;box(site,0,8.9,15,7.5,.045,-.05,mat(0x777a77,.98));
+    floor(f1,0,0,BW,BD,-.02,M.foundation); floor(f1,0,0,BW-.24,BD-.24,.08,M.floor);
+
+    // 1F exterior shell. South is the entrance/elevation side.
+    wallX(f1,0,-BD/2,BW,0,H1);wallX(f1,0,BD/2,BW,0,H1);wallZ(f1,-BW/2,0,BD,0,H1);wallZ(f1,BW/2,0,BD,0,H1);
+    // Accent facade and entrance projection from corrected exterior perspective.
+    box(details1,1.35,BD/2+.10,3.10,.13,H1+2.10,0,M.accent);box(details1,4.25,BD/2+.36,2.55,.72,H1,0,M.wall);box(details1,4.25,BD/2+.40,2.75,.90,.20,H1,M.roof);
+    addDoor(details1,'S',3.98,1.20,2.35,0,M.wood);
+    // 1F windows from plan/elevations (major openings and high windows).
+    addWindow(details1,'S',-4.52,1.65,2.00,.20,0);addWindow(details1,'S',.10,2.56,2.20,.20,0);addWindow(details1,'N',-4.55,1.65,1.10,.95,0);addWindow(details1,'N',-.25,2.56,1.10,.90,0);addWindow(details1,'N',4.25,1.60,.45,1.15,0);
+    addWindow(details1,'W',-3.10,1.65,2.00,.20,0);addWindow(details1,'W',2.75,1.65,1.10,.95,0);addWindow(details1,'E',-3.35,.65,.65,1.25,0);addWindow(details1,'E',-.60,.65,.65,1.30,0);addWindow(details1,'E',2.60,1.15,.90,.80,0);
+
+    // 1F partitions, dimensioned on 910 mm module from A-2.
+    wallZ(f1,-2.73,-.68,8.15,.14,H1-.14); wallX(f1,-4.55,-1.365,3.64,.14,H1-.14); wallX(f1,-4.55,1.595,3.64,.14,H1-.14);
+    wallZ(f1,2.73,-1.42,6.70,.14,H1-.14); wallX(f1,4.55,-2.275,3.64,.14,H1-.14); wallX(f1,4.55,-.455,3.64,.14,H1-.14);wallX(f1,4.55,1.365,3.64,.14,H1-.14);
+    wallZ(f1,.91,-.80,3.64,.14,H1-.14);wallX(f1,1.82,-2.62,1.82,.14,H1-.14);wallX(f1,1.82,1.02,1.82,.14,H1-.14);
+    wallZ(f1,-4.55,.08,1.82,.14,H1-.14);wallX(f1,-3.64,.08,1.82,.14,H1-.14);
+    internalDoor(f1,-2.73,-3.15,.82,.14,Math.PI/2);internalDoor(f1,-2.73,2.55,.82,.14,Math.PI/2);internalDoor(f1,-4.55,.35,.76,.14,Math.PI/2);internalDoor(f1,2.73,-3.05,.76,.14,Math.PI/2);internalDoor(f1,2.73,.30,.76,.14,Math.PI/2);internalDoor(f1,3.65,-.455,.76,.14,0);internalDoor(f1,1.82,-1.72,.82,.14,0);
+    // 1F equipment and furniture-scale masses.
+    cabinet(f1,-.55,-3.55,3.55,.62,.92,.14,M.trim);cabinet(f1,-.30,-2.05,2.10,.80,.90,.14,M.trim);cabinet(f1,-.20,.10,2.00,.95,.74,.14,mat(0xb38c61,.88));
+    cabinet(f1,4.55,-3.25,1.62,1.62,.58,.14,mat(0xd8e6ea,.7));cabinet(f1,4.55,-1.42,1.20,.58,.85,.14,M.trim);cabinet(f1,4.60,.48,.72,1.20,.54,.14,M.trim);stair(f1,1.82,.10,.14,true);
+    label('洋室A 6帖',-4.55,-3.12,1.55,labels1);label('洋室B 7帖',-4.55,2.85,1.55,labels1);label('LDK1 29.4帖',-.30,.45,1.55,labels1);label('WIC',-5.45,-.15,1.55,labels1);label('納戸',-3.60,.15,1.55,labels1);label('浴室',4.55,-3.35,1.55,labels1);label('洗面脱衣',4.55,-1.35,1.55,labels1);label('玄関',4.15,3.45,1.55,labels1);
+
+    // 2F slab, shell and balcony/recesses.
+    floor(f2,0,-.08,BW,8.645,Y2,M.floor);wallX(f2,0,-4.40,BW,F2,H2);wallX(f2,0,4.18,BW,F2,H2);wallZ(f2,-BW/2,-.10,8.58,F2,H2);wallZ(f2,BW/2,-.10,8.58,F2,H2);
+    wallZ(f2,-2.73,-.20,7.80,F2+.14,H2-.14);wallX(f2,-4.55,-1.365,3.64,F2+.14,H2-.14);wallX(f2,-4.55,1.365,3.64,F2+.14,H2-.14);
+    wallZ(f2,2.73,-.25,7.75,F2+.14,H2-.14);wallX(f2,4.55,-1.365,3.64,F2+.14,H2-.14);wallX(f2,4.55,.91,3.64,F2+.14,H2-.14);wallX(f2,4.55,2.73,3.64,F2+.14,H2-.14);
+    wallZ(f2,.91,-.15,3.64,F2+.14,H2-.14);wallX(f2,1.82,-1.97,1.82,F2+.14,H2-.14);wallX(f2,1.82,1.67,1.82,F2+.14,H2-.14);
+    internalDoor(f2,-2.73,-2.90,.82,F2+.14,Math.PI/2);internalDoor(f2,-2.73,2.45,.82,F2+.14,Math.PI/2);internalDoor(f2,2.73,-2.75,.82,F2+.14,Math.PI/2);internalDoor(f2,2.73,.20,.76,F2+.14,Math.PI/2);internalDoor(f2,4.55,1.90,.76,F2+.14,Math.PI/2);
+    // South balcony (dark accent), west/east roof terraces and corrected windows.
+    box(details2,.55,4.58,4.10,.72,1.30,F2+.70,M.accent);box(details2,.55,4.98,4.55,1.18,.13,F2-.02,M.tile);for(let i=0;i<6;i++)box(details2,-1.35+i*.75,5.48,.035,.035,.70,F2+1.30,M.frame);box(details2,.55,5.48,4.35,.05,.05,F2+1.98,M.frame);
+    addWindow(details2,'S',-4.55,1.65,1.55,.65,F2);addWindow(details2,'S',-.55,2.56,2.10,.35,F2);addWindow(details2,'S',3.95,1.65,2.00,.30,F2);addWindow(details2,'N',-4.60,1.65,1.15,.75,F2);addWindow(details2,'N',-.35,2.56,1.15,.70,F2);addWindow(details2,'N',4.10,1.65,1.15,.75,F2);
+    addWindow(details2,'W',-2.80,1.65,1.50,.45,F2);addWindow(details2,'W',2.55,1.65,1.55,.45,F2);addWindow(details2,'E',-2.55,.65,.65,1.25,F2);addWindow(details2,'E',.20,.65,.65,1.25,F2);addWindow(details2,'E',2.70,1.65,1.40,.70,F2);
+    cabinet(f2,-.25,-3.45,3.20,.65,.86,F2+.14,M.trim);cabinet(f2,4.45,-2.45,2.10,.72,.86,F2+.14,M.trim);stair(f2,1.82,-.10,F2+.14,true);
+    label('洋室C 4.5帖',-4.55,-2.75,F2+1.55,labels2);label('洋室D 6帖',-4.55,2.55,F2+1.55,labels2);label('LDK2 21.4帖',-.20,.20,F2+1.55,labels2);label('洋室E 7帖',4.45,-2.55,F2+1.55,labels2);label('書斎',5.30,3.15,F2+1.55,labels2);label('WIC',5.30,-.20,F2+1.55,labels2);label('ランドリー',4.20,2.15,F2+1.55,labels2);
+
+    // Hip roof generated as four sloped planes, ridge and solar arrays; height follows A-3 (8.637m).
+    function hipRoof(group,cx,cz,w,d,eave,rise,material=M.roof){const x0=cx-w/2,x1=cx+w/2,z0=cz-d/2,z1=cz+d/2,rl=Math.max(.35,(w-d)/2),y=eave;const verts=new Float32Array([x0,y,z0,x1,y,z0,cx+rl,y+rise,cz,cx-rl,y+rise,cz,x1,y,z0,x1,y,z1,cx+rl,y+rise,cz,x1,y,z1,x0,y,z1,cx-rl,y+rise,cz,cx+rl,y+rise,cz,x0,y,z1,x0,y,z0,cx-rl,y+rise,cz]);const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(verts,3));geo.setIndex([0,1,2,0,2,3,4,5,6,5,7,8,5,8,6,9,10,11]);geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,material);mesh.castShadow=mesh.receiveShadow=true;group.add(mesh);return mesh}
+    hipRoof(roof,0,-.10,14.10,10.10,5.72,2.05);hipRoof(roof,4.20,3.80,4.40,2.45,2.82,.72);hipRoof(roof,-4.45,3.72,3.90,2.20,2.82,.66);
+    // Solar panels on south roof, matching elevation quantity/layout.
+    for(let r=0;r<2;r++)for(let c=0;c<6;c++){const p=box(roof,-2.65+c*1.05,-.15+r*.72,.94,.62,.045,7.18-r*.22,M.solar);p.rotation.x=-.43}
+    // Foundation band, entry steps, AC outdoor-unit placeholders seen in corrected perspectives.
+    box(common,0,0,BW+.15,BD+.15,.45,-.45,M.foundation);for(let i=0;i<3;i++)box(common,4.05,5.05+i*.20,1.65,.30,.12,i*.08,M.tile);for(const [x,z] of [[-5.55,4.65],[-3.95,4.65],[5.75,-3.4],[5.75,-1.8]]){box(common,x,z,.62,.25,.58,.02,M.frame);box(common,x,z+.14,.42,.04,.42,.10,M.trim)}
+    labels1.visible=labels2.visible=false;
+
+    let floorMode='all',roofOn=true,labelsOn=false;
+    function sync(){const one=floorMode==='1',two=floorMode==='2';f1.visible=!two;f2.visible=!one;details1.visible=!two;details2.visible=!one;roof.visible=roofOn&&!one;labels1.visible=labelsOn&&!two;labels2.visible=labelsOn&&!one;if(one){f2.visible=false;details2.visible=false;roof.visible=false}if(two){f1.visible=false;details1.visible=false;roof.visible=false}}
+    document.querySelectorAll('[data-floor]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-floor]').forEach(x=>x.classList.remove('active'));b.classList.add('active');floorMode=b.dataset.floor;roofOn=floorMode==='all';document.getElementById('roofBtn').classList.toggle('active',roofOn);document.getElementById('roofBtn').textContent='屋根 '+(roofOn?'ON':'OFF');sync()});
+    document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-view]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const v=b.dataset.view;if(v==='iso')camera.position.set(16,12,18);if(v==='top')camera.position.set(0,29,.01);if(v==='front')camera.position.set(0,6.3,24);controls.target.set(0,2.4,0);controls.update()});
+    document.getElementById('roofBtn').onclick=e=>{roofOn=!roofOn;e.currentTarget.classList.toggle('active',roofOn);e.currentTarget.textContent='屋根 '+(roofOn?'ON':'OFF');sync()};
+    document.getElementById('labelBtn').onclick=e=>{labelsOn=!labelsOn;e.currentTarget.classList.toggle('active',labelsOn);e.currentTarget.textContent='部屋名 '+(labelsOn?'ON':'OFF');sync()};
+    addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});sync();(function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)})();
   </script>
 </body>
 </html>
