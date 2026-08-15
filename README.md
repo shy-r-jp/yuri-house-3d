@@ -1,14 +1,12 @@
-# yuri-house-3d
+# Yuri House 3D v2
 
-GitHub Pages用の住宅3Dビューアです。
+図面反映を進めたGitHub Pages用3Dビューアです。
 
-## 公開
-1. `index.html` `styles.css` `app.js` をリポジトリ直下へアップロード
-2. Settings → Pages
-3. Source: Deploy from a branch
-4. Branch: `main` / Folder: `/(root)` → Save
+主な更新:
+- 1階: LDK、洋室A/B、WIC、納戸、浴室、洗面脱衣、玄関
+- 2階: LDK2、洋室C/D/E、WIC、ランドリー
+- キッチン、浴槽、洗面、トイレ、階段、バルコニーを簡易追加
+- 設備ON/OFF追加
+- 初期表示を1階に変更
 
-公開URL:
-`https://shy-r-jp.github.io/yuri-house-3d/`
-
-初期版なので壁・建具・屋根の一部は概略です。
+既存リポジトリの4ファイルをこの版で上書きしてください。
