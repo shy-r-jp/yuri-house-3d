@@ -1,46 +1,78 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#e9eef4">
-<title>Yuri House 3D v5.1</title>
-<link rel="stylesheet" href="./styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#f4f0e8">
+  <title>Yuri House 3D</title>
+  <style>
+    :root{color-scheme:light;--ink:#252521;--muted:#74736c;--paper:rgba(255,255,255,.92);--line:#ddd9d0;--accent:#343631}
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#e9eef1;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI",sans-serif;color:var(--ink)}
+    #view{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+    .panel{position:fixed;z-index:5;left:max(14px,env(safe-area-inset-left));top:max(14px,env(safe-area-inset-top));width:min(350px,calc(100vw - 28px));padding:15px;background:var(--paper);border:1px solid rgba(255,255,255,.8);border-radius:20px;box-shadow:0 12px 36px rgba(41,48,53,.16);backdrop-filter:blur(18px)}
+    .title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.title h1{margin:0;font-size:19px;letter-spacing:-.02em}.tag{padding:4px 7px;border-radius:999px;background:#ede9df;color:#6a665e;font-size:10px;white-space:nowrap}
+    .sub{margin:3px 0 11px;font-size:11px;color:var(--muted)}
+    .group{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:7px}
+    button{min-height:39px;border:1px solid var(--line);background:#fff;border-radius:11px;color:#4b4b46;font:inherit;font-size:12px;font-weight:650;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    button.active{border-color:var(--accent);background:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+    button:focus-visible{outline:3px solid #7fb7da;outline-offset:2px}
+    .toggles{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}.toggles button{color:#343631}.toggles button.active{color:#fff}
+    .help{margin-top:10px;padding-top:9px;border-top:1px solid #e7e4dd;font-size:10px;line-height:1.55;color:var(--muted)}
+    .badge{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:4;padding:8px 10px;border-radius:12px;background:rgba(37,37,33,.76);color:#fff;font-size:10px;backdrop-filter:blur(10px)}
+    @media(max-width:600px){.panel{padding:12px;border-radius:17px}.title h1{font-size:17px}.sub{margin-bottom:8px}.group,.toggles{gap:5px;margin-top:5px}button{min-height:36px}.help{margin-top:7px;padding-top:7px}}
+    @media(max-height:620px){.help{display:none}.panel{padding:10px}.sub{display:none}}
+  </style>
 </head>
 <body>
-<div id="app"></div>
+  <canvas id="view" aria-label="石井邸の簡易3Dモデル"></canvas>
+  <section class="panel" aria-label="表示設定">
+    <div class="title"><h1>Yuri House 3D</h1><span class="tag">2026/06/26 図面反映</span></div>
+    <p class="sub">2階建て住宅・寸法ベース簡易ビューア</p>
+    <div class="group" aria-label="階の選択">
+      <button data-floor="all" class="active">外観</button><button data-floor="1">1階</button><button data-floor="2">2階</button>
+    </div>
+    <div class="group" aria-label="視点の選択">
+      <button data-view="iso" class="active">斜め</button><button data-view="top">真上</button><button data-view="front">正面</button>
+    </div>
+    <div class="toggles">
+      <button id="roofBtn" class="active">屋根 ON</button><button id="labelBtn">部屋名 OFF</button>
+    </div>
+    <div class="help">ドラッグ：回転　ピンチ／ホイール：拡大縮小<br>図面の主要寸法・間取りを簡易的に立体化しています。</div>
+  </section>
+  <div class="badge">建物幅 12.740m × 奥行 9.555m</div>
+  <script>
+  (()=>{
+    'use strict';
+    const canvas=document.getElementById('view'),ctx=canvas.getContext('2d');
+    const roofBtn=document.getElementById('roofBtn'),labelBtn=document.getElementById('labelBtn');
+    let vw=0,vh=0,dpr=1;
+    const state={yaw:-.68,pitch:.46,zoom:42,floor:'all',roof:true,labels:false};
+    const BW=12.740,BD=9.555,H1=2.600,H2=2.500,SL=.16;
+    const faces=[];
 
-<div class="panel">
-  <div class="title">Yuri House 3D <span>v5.1</span></div>
-  <div class="sub">2026/06/26 修正図面ベース / iPhone安定版</div>
-  <div class="row">
-    <button data-floor="1" class="active">1階</button>
-    <button data-floor="2">2階</button>
-    <button data-floor="all">全体</button>
-  </div>
-  <div class="row">
-    <button data-view="orbit" class="active">見回す</button>
-    <button data-view="top">真上</button>
-    <button data-view="walk">室内</button>
-  </div>
-  <div class="row">
-    <button id="roofBtn">屋根 OFF</button>
-    <button id="labelBtn" class="active">部屋名 ON</button>
-    <button id="equipBtn" class="active">設備 ON</button>
-  </div>
-  <div class="help">ドラッグで回転 / ピンチ・ホイールでズーム。v4の安定構成をベースに、ドアとテクスチャを追加。</div>
-</div>
-
-<div id="status">v5.1 ready</div>
-
-<script type="importmap">
-{
-  "imports":{
-    "three":"https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-    "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
-  }
-}
-</script>
-<script type="module" src="./app.js"></script>
+    function resize(){dpr=Math.min(devicePixelRatio||1,2);vw=innerWidth;vh=innerHeight;canvas.width=Math.round(vw*dpr);canvas.height=Math.round(vh*dpr);canvas.style.width=vw+'px';canvas.style.height=vh+'px';ctx.setTransform(dpr,0,0,dpr,0,0);state.zoom=Math.min(vw<600?34:45,Math.max(24,vw/25));draw()}
+    function rotate([x,y,z]){const cy=Math.cos(state.yaw),sy=Math.sin(state.yaw),cp=Math.cos(state.pitch),sp=Math.sin(state.pitch),x1=x*cy-z*sy,z1=x*sy+z*cy;return[x1,y*cp-z1*sp,y*sp+z1*cp]}
+    function project(p){const r=rotate(p);return[vw/2+r[0]*state.zoom,vh*(vw<600?.63:.60)-r[1]*state.zoom,r[2]]}
+    function queue(points,fill,stroke='#aaa49a'){faces.push({points,fill,stroke,depth:points.reduce((n,p)=>n+rotate(p)[2],0)/points.length})}
+    function paint(){faces.sort((a,b)=>a.depth-b.depth);for(const f of faces){ctx.beginPath();f.points.map(project).forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=f.fill;ctx.fill();if(f.stroke){ctx.strokeStyle=f.stroke;ctx.lineWidth=.85;ctx.stroke()}}}
+    function box(x,z,w,d,h,y,top='#efe8da',sides=['#ded6c8','#d3cbbd','#c7c0b4','#e7dfd2']){const x0=x-w/2,x1=x+w/2,z0=z-d/2,z1=z+d/2,y1=y+h;queue([[x0,y,z0],[x1,y,z0],[x1,y1,z0],[x0,y1,z0]],sides[0]);queue([[x1,y,z0],[x1,y,z1],[x1,y1,z1],[x1,y1,z0]],sides[1]);queue([[x1,y,z1],[x0,y,z1],[x0,y1,z1],[x1,y1,z1]],sides[2]);queue([[x0,y,z1],[x0,y,z0],[x0,y1,z0],[x0,y1,z1]],sides[3]);queue([[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]],top)}
+    function wall(x,z,len,t,h,y,alongX=true){box(x,z,alongX?len:t,alongX?t:len,h,y,'#f6f1e8')}
+    function glass(x,z,w,h,y,side='south'){const t=.035;if(side==='south'||side==='north')box(x,z,w,t,h,y,'#b8d3dc',['#a8c6d1','#8daeb9','#91b2bd','#bad4dd']);else box(x,z,t,w,h,y,'#b8d3dc',['#a8c6d1','#8daeb9','#91b2bd','#bad4dd'])}
+    function roomLabel(text,x,y,z){if(!state.labels)return;const p=project([x,y,z]);ctx.font='700 11px -apple-system,sans-serif';const tw=ctx.measureText(text).width;ctx.fillStyle='rgba(255,255,255,.92)';ctx.fillRect(p[0]-tw/2-6,p[1]-9,tw+12,18);ctx.fillStyle='#2c2c29';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,p[0],p[1])}
+    function ground(){queue([[-18,-.27,-15],[18,-.27,-15],[18,-.27,15],[-18,-.27,15]],'#ced6d4',null);queue([[-18,-.25,6],[18,-.25,6],[18,-.25,15],[-18,-.25,15]],'#b9bdba',null)}
+    function floor1(){box(0,0,BW,BD,.20,-.20,'#c7af87');wall(0,-BD/2,BW,.13,H1,0);wall(0,BD/2,BW,.13,H1,0);wall(-BW/2,0,BD,.13,H1,0,false);wall(BW/2,0,BD,.13,H1,0,false);wall(-2.73,.08,8.85,.11,H1,0,false);wall(-4.55,.20,3.64,.11,H1,0);wall(-4.55,-2.58,3.64,.11,H1,0);wall(3.15,-.42,6.90,.11,H1,0,false);wall(4.55,1.00,2.75,.11,H1,0);wall(4.55,-1.35,2.75,.11,H1,0);wall(1.75,2.08,2.45,.11,H1,0);glass(-4.55,-BD/2-.07,1.65,1.65,.45);glass(-4.55,BD/2+.07,2.55,1.75,.35,'north');glass(.25,-BD/2-.07,2.55,1.80,.30);glass(BW/2+.07,1.15,1.25,1.20,.70,'east')}
+    function floor2(){const y=H1+SL;box(0,0,BW,BD,.14,y,'#d6c39f');const wy=y+.14;wall(0,-BD/2,BW,.13,H2,wy);wall(0,BD/2,BW,.13,H2,wy);wall(-BW/2,0,BD,.13,H2,wy,false);wall(BW/2,0,BD,.13,H2,wy,false);wall(-2.05,.15,8.60,.11,H2,wy,false);wall(-4.30,.45,4.55,.11,H2,wy);wall(-4.30,-2.35,4.55,.11,H2,wy);wall(2.35,.25,8.20,.11,H2,wy,false);wall(4.25,1.10,3.15,.11,H2,wy);wall(4.25,-1.10,3.15,.11,H2,wy);box(-4.35,-BD/2-.72,3.8,1.35,.11,y+.02,'#b5b6b2');box(3.75,-BD/2-.68,2.7,1.25,.11,y+.02,'#b5b6b2');glass(-4.5,-BD/2-.07,1.7,1.65,wy+.45);glass(.2,-BD/2-.07,2.55,1.70,wy+.45);glass(4.2,-BD/2-.07,1.3,1.45,wy+.55);glass(-BW/2-.07,2.3,1.5,1.45,wy+.55,'west')}
+    function roof(){const y=H1+SL+.14+H2,h=1.55,e=.62;queue([[-BW/2-e,y,-BD/2-e],[BW/2+e,y,-BD/2-e],[BW/2-1.5,y+h,0],[-BW/2+1.2,y+h,0]],'#303335','#202224');queue([[BW/2+e,y,-BD/2-e],[BW/2+e,y,BD/2+e],[BW/2-1.5,y+h,0]],'#25282a','#202224');queue([[BW/2+e,y,BD/2+e],[-BW/2-e,y,BD/2+e],[-BW/2+1.2,y+h,0],[BW/2-1.5,y+h,0]],'#202325','#17191a');queue([[-BW/2-e,y,BD/2+e],[-BW/2-e,y,-BD/2-e],[-BW/2+1.2,y+h,0]],'#3a3d3f','#202224')}
+    function draw(){faces.length=0;const g=ctx.createLinearGradient(0,0,0,vh);g.addColorStop(0,'#eef4f7');g.addColorStop(.68,'#dfe7e9');g.addColorStop(1,'#cdd4d2');ctx.fillStyle=g;ctx.fillRect(0,0,vw,vh);ground();if(state.floor==='all'||state.floor==='1')floor1();if(state.floor==='all'||state.floor==='2')floor2();if(state.roof&&state.floor==='all')roof();paint();if(state.floor==='all'||state.floor==='1')floor1Labels();if(state.floor==='all'||state.floor==='2')floor2Labels()}
+    function floor1Labels(){roomLabel('LDK1 29.4帖',0,1.05,-.8);roomLabel('洋室A 6帖',-4.5,1.05,2.5);roomLabel('洋室B 7帖',-4.5,1.05,-2.8);roomLabel('玄関',4.3,1.05,-3.0)}
+    function floor2Labels(){const y=H1+SL+.14;roomLabel('LDK2 21.4帖',0,y+1.05,-.6);roomLabel('洋室C 4.5帖',-4.5,y+1.05,2.5);roomLabel('洋室D 6帖',-4.5,y+1.05,-2.7);roomLabel('洋室E 7帖',4.1,y+1.05,2.4)}
+    document.querySelectorAll('[data-floor]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-floor]').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.floor=b.dataset.floor;state.roof=state.floor==='all';roofBtn.classList.toggle('active',state.roof);roofBtn.textContent='屋根 '+(state.roof?'ON':'OFF');draw()}));
+    document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-view]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const v=b.dataset.view;if(v==='iso'){state.yaw=-.68;state.pitch=.46}if(v==='top'){state.yaw=0;state.pitch=1.52}if(v==='front'){state.yaw=0;state.pitch=.08}draw()}));
+    roofBtn.addEventListener('click',()=>{state.roof=!state.roof;roofBtn.textContent='屋根 '+(state.roof?'ON':'OFF');roofBtn.classList.toggle('active',state.roof);draw()});labelBtn.addEventListener('click',()=>{state.labels=!state.labels;labelBtn.textContent='部屋名 '+(state.labels?'ON':'OFF');labelBtn.classList.toggle('active',state.labels);draw()});
+    let dragging=false,lx=0,ly=0,pinch=0,zoom0=0;canvas.addEventListener('pointerdown',e=>{dragging=true;lx=e.clientX;ly=e.clientY;canvas.setPointerCapture?.(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(!dragging)return;state.yaw+=(e.clientX-lx)*.008;state.pitch=Math.max(.05,Math.min(1.52,state.pitch-(e.clientY-ly)*.006));lx=e.clientX;ly=e.clientY;draw()});['pointerup','pointercancel'].forEach(n=>canvas.addEventListener(n,()=>dragging=false));canvas.addEventListener('wheel',e=>{e.preventDefault();state.zoom=Math.max(20,Math.min(92,state.zoom*(e.deltaY>0?.92:1.08)));draw()},{passive:false});canvas.addEventListener('touchstart',e=>{if(e.touches.length===2){pinch=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);zoom0=state.zoom}},{passive:true});canvas.addEventListener('touchmove',e=>{if(e.touches.length===2&&pinch){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);state.zoom=Math.max(20,Math.min(92,zoom0*d/pinch));draw()}},{passive:true});
+    addEventListener('resize',resize);resize();
+  })();
+  </script>
 </body>
 </html>
